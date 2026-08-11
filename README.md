@@ -38,6 +38,23 @@ Custom Linux 6.6.98 kernel build with full hardware support and overclocking for
 - **WiFi:** AIC8800D80 (WiFi 6 + BT 5.x via USB)
 - **Ethernet:** Gigabit RGMII (STMMAC)
 
+
+## Updating safely (read this before `apt upgrade`)
+
+This image's kernel and boot config live **outside apt**. On images from
+**2026-08-10 onward**, apt pins (`/etc/apt/preferences.d/99-a7a-custom-kernel`)
+block the three package classes that would break the board — stock
+`linux-image-*` kernels, `u-boot-menu`, and `flash-kernel` — so normal
+updates (security patches, apps, libraries) are safe.
+
+On **older images**, or if you want the boot chain verified every time, use
+[`scripts/safe-update.sh`](scripts/safe-update.sh): it restores the pins if
+missing, backs up the kernel + `extlinux.conf`, runs the upgrade, then
+verifies nothing moved (and restores from backup if it did).
+
+Long-term plan: package the custom kernel as a proper `.deb` (providing
+`linux-image`) so apt cooperates instead of being fenced off.
+
 ## Benchmark Results
 
 ### CPU (Overclocked)
