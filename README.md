@@ -1,5 +1,12 @@
 # Radxa Cubie A7A — Custom Kernel & Hardware Tuning
 
+> ⚠️ **Flashed an image from before 2026-08-10 and it won't boot?** The system
+> on your card is fine — the boot chain had two fixable defects (wrong U-Boot
+> variant + empty EFI partition). **[boot-fix/](boot-fix/) repairs your card
+> in place in ~5 minutes** — no re-download. Images released from 2026-08-10
+> onward have both fixes baked in and boot hands-free (power → login ≈ 75 s,
+> verified).
+
 Custom Linux 6.6.98 kernel build with full hardware support and overclocking for the Radxa Cubie A7A (Allwinner A733 SoC).
 
 **The vendor abandoned this board** — shipping only Debian 11 with a dead-end Linux 5.15 kernel, no GPU acceleration, broken cpufreq, and incomplete hardware support. This project fixes all of that.
