@@ -394,3 +394,24 @@ sudo resize2fs /dev/sdX3
 # On first boot, regenerate SSH host keys
 sudo ssh-keygen -A && sudo systemctl restart sshd
 ```
+
+## Display color fix (R/B swap) — 2026-08-11
+
+The PowerVR DDK GL stack (24.2@6603887 from `allwinner-target`) writes red and
+blue swapped into every buffer it renders (server-side glamor and client EGL
+alike; a blue YouTube logo is the telltale). CPU rendering through the same
+display engine is correct, so the fix inverts the display engine's channel
+interpretation for 32-bit RGB formats to match what the GL stack actually
+writes: `patches/0001-sunxi-drm-de-swap-rb-channels-for-pvr-glamor.patch`
+(swaps the four RGB returns in `drm_to_de_format()` in
+`bsp/drivers/drm/sunxi_device/hardware/lowlevel_de/de_channel.c`, mirrors the
+TFBC/AFBC RGB byte-order tables, leaves YUV and the fbdev/logo path untouched).
+
+Known cosmetic side effect: the CPU-drawn boot logo/fbcon shows swapped colors
+(the penguins' beaks go blue). The GPU desktop — the thing you look at all
+day — is correct.
+
+Full desktop bring-up for this stack (GPU firmware, glamor, compositor
+workarounds for the DDK's deferred-kick cursor trails, clock ladder with
+proper dcdc4 voltages, `a7a-clock` tool) is maintained in the recovery kit
+repo alongside this one.

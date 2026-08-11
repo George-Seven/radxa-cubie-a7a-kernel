@@ -1,0 +1,167 @@
+diff --git a/drivers/drm/sunxi_device/hardware/lowlevel_de/afbd/de_fbd_atw.c b/drivers/drm/sunxi_device/hardware/lowlevel_de/afbd/de_fbd_atw.c
+index 1ae6562..ffff884 100644
+--- a/drivers/drm/sunxi_device/hardware/lowlevel_de/afbd/de_fbd_atw.c
++++ b/drivers/drm/sunxi_device/hardware/lowlevel_de/afbd/de_fbd_atw.c
+@@ -743,14 +743,14 @@ int de_afbd_apply_lay(struct de_afbd_handle *handle, struct display_channel_stat
+ 	case DRM_FORMAT_ARGB4444:
+ 	case DRM_FORMAT_ARGB2101010:
+ 	case DRM_FORMAT_ARGB1555:
+-		dwval = 0x1230;
++		dwval = 0x3210;
+ 		break;
+ 	case DRM_FORMAT_ABGR8888:
+ 	case DRM_FORMAT_XBGR8888:
+ 	case DRM_FORMAT_ABGR4444:
+ 	case DRM_FORMAT_ABGR2101010:
+ 	case DRM_FORMAT_ABGR1555:
+-		dwval = 0x3210;
++		dwval = 0x1230;
+ 		break;
+ 	case DRM_FORMAT_RGBA8888:
+ 	case DRM_FORMAT_RGBX8888:
+@@ -768,11 +768,11 @@ int de_afbd_apply_lay(struct de_afbd_handle *handle, struct display_channel_stat
+ 		break;
+ 	case DRM_FORMAT_RGB888:
+ 	case DRM_FORMAT_RGB565:
+-		dwval = 0x1230;
++		dwval = 0x3210;
+ 		break;
+ 	case DRM_FORMAT_BGR888:
+ 	case DRM_FORMAT_BGR565:
+-		dwval = 0x3210;
++		dwval = 0x1230;
+ 		break;
+ 	case DRM_FORMAT_YUV422:
+ 	case DRM_FORMAT_YUV420:
+@@ -785,7 +785,7 @@ int de_afbd_apply_lay(struct de_afbd_handle *handle, struct display_channel_stat
+ 		dwval = 0x3210;
+ 		break;
+ 	default:
+-		dwval = 0x3210;
++		dwval = 0x1230;
+ 		DRM_ERROR("unsupported format=%x\n", fb->format->format);
+ 	}
+ 	reg->fbd_fmt_seq.dwval = dwval;
+diff --git a/drivers/drm/sunxi_device/hardware/lowlevel_de/de_channel.c b/drivers/drm/sunxi_device/hardware/lowlevel_de/de_channel.c
+index 31126a3..471b5ec 100644
+--- a/drivers/drm/sunxi_device/hardware/lowlevel_de/de_channel.c
++++ b/drivers/drm/sunxi_device/hardware/lowlevel_de/de_channel.c
+@@ -120,17 +120,17 @@ int drm_to_de_format(uint32_t format)
+ {
+ 	switch (format) {
+ 	case DRM_FORMAT_ARGB8888:
+-		return DE_FORMAT_ARGB_8888;
++		return DE_FORMAT_ABGR_8888; /* R/B swap: PVR GL writes swapped */
+ 	case DRM_FORMAT_ABGR8888:
+-		return DE_FORMAT_ABGR_8888;
++		return DE_FORMAT_ARGB_8888; /* R/B swap: PVR GL writes swapped */
+ 	case DRM_FORMAT_RGBA8888:
+ 		return DE_FORMAT_RGBA_8888;
+ 	case DRM_FORMAT_BGRA8888:
+ 		return DE_FORMAT_BGRA_8888;
+ 	case DRM_FORMAT_XRGB8888:
+-		return DE_FORMAT_XRGB_8888;
++		return DE_FORMAT_XBGR_8888; /* R/B swap: PVR GL writes swapped */
+ 	case DRM_FORMAT_XBGR8888:
+-		return DE_FORMAT_XBGR_8888;
++		return DE_FORMAT_XRGB_8888; /* R/B swap: PVR GL writes swapped */
+ 	case DRM_FORMAT_RGBX8888:
+ 		return DE_FORMAT_RGBX_8888;
+ 	case DRM_FORMAT_BGRX8888:
+diff --git a/drivers/drm/sunxi_device/hardware/lowlevel_de/tfbd/de_tfbd.c b/drivers/drm/sunxi_device/hardware/lowlevel_de/tfbd/de_tfbd.c
+index 6716f00..8bcefc2 100644
+--- a/drivers/drm/sunxi_device/hardware/lowlevel_de/tfbd/de_tfbd.c
++++ b/drivers/drm/sunxi_device/hardware/lowlevel_de/tfbd/de_tfbd.c
+@@ -111,13 +111,13 @@ static const uint64_t format_modifiers_tfbc[] = {
+ };
+ 
+ const static struct de_tfbd_drmformat_mapping format2tfbc_mapping[] = {
+-	{ DRM_FORMAT_ARGB8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x2103, 0x0c, true },
+-	{ DRM_FORMAT_ABGR8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x0123, 0x0c, true },
++	{ DRM_FORMAT_ARGB8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x0123, 0x0c, true },
++	{ DRM_FORMAT_ABGR8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x2103, 0x0c, true },
+ 	{ DRM_FORMAT_RGBA8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x3210, 0x0c, true },
+ 	{ DRM_FORMAT_BGRA8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x1230, 0x0c, true },
+ 
+-	{ DRM_FORMAT_XRGB8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x2103, 0x0c, true },
+-	{ DRM_FORMAT_XBGR8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x0123, 0x0c, true },
++	{ DRM_FORMAT_XRGB8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x0123, 0x0c, true },
++	{ DRM_FORMAT_XBGR8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x2103, 0x0c, true },
+ 	{ DRM_FORMAT_RGBX8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x3210, 0x0c, true },
+ 	{ DRM_FORMAT_BGRX8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x1230, 0x0c, true },
+ 
+diff --git a/drivers/gmac/Makefile b/drivers/gmac/Makefile
+index c39207b..ad4155c 100644
+--- a/drivers/gmac/Makefile
++++ b/drivers/gmac/Makefile
+@@ -1,5 +1,6 @@
+ # SPDX-License-Identifier: GPL-2.0-only
+ ccflag-y+= -DDYNAMIC_DEBUG_MODULE
++CFLAGS_sunxi-gmac.o += -I$(src)
+ 
+ obj-$(CONFIG_AW_GMAC) += sunxi-gmac.o
+ obj-$(CONFIG_AW_GMAC_MDIO) += sunxi-mdio.o
+diff --git a/drivers/sound/platform/Makefile b/drivers/sound/platform/Makefile
+index 6fe72c2..08cdea9 100644
+--- a/drivers/sound/platform/Makefile
++++ b/drivers/sound/platform/Makefile
+@@ -6,6 +6,7 @@
+ 
+ ccflags-y += -I $(srctree)/bsp/drivers/sound/pa/
+ ccflags-y += -I $(srctree)/bsp/drivers/sound/adapter
++ccflags-y += -I $(srctree)/bsp/drivers/sound/platform
+ ADPT_DIR := ../adapter
+ 
+ snd_soc_sunxi_component_sfx-objs		+= snd_sunxi_sfx.o
+diff --git a/drivers/usb/host/sunxi-hci.h b/drivers/usb/host/sunxi-hci.h
+index b15c685..f842dd4 100644
+--- a/drivers/usb/host/sunxi-hci.h
++++ b/drivers/usb/host/sunxi-hci.h
+@@ -29,7 +29,7 @@
+ #include <linux/regulator/consumer.h>
+ #include <linux/phy/phy.h>
+ 
+-#include <../sunxi_usb/include/sunxi_usb_debug.h>
++#include "../sunxi_usb/include/sunxi_usb_debug.h"
+ 
+ extern int usb_disabled(void);
+ extern struct atomic_notifier_head usb_pm_notifier_list;
+diff --git a/drivers/ve/cedar-ve/Makefile b/drivers/ve/cedar-ve/Makefile
+index 2cd374b..bc818a8 100644
+--- a/drivers/ve/cedar-ve/Makefile
++++ b/drivers/ve/cedar-ve/Makefile
+@@ -3,7 +3,7 @@
+ # Makefile for the kernel multimedia device drivers.
+ #
+ 
+-# ccflags-y += -I $(srctree)/drivers/media/cedar-ve
++ccflags-y += -I $(src)
+ ccflags-$(CONFIG_AW_VIDEO_DYNAMIC_DEBUG) += -DDYNAMIC_DEBUG_MODULE
+ 
+ obj-$(CONFIG_AW_VIDEO_ENCODER_DECODER) += sunxi-ve.o
+diff --git a/modules/gpu/Makefile b/modules/gpu/Makefile
+index 5beb874..1a789cc 100644
+--- a/modules/gpu/Makefile
++++ b/modules/gpu/Makefile
+@@ -23,7 +23,7 @@ MODULE_INS_DIR := $(LICHEE_MOD_DIR)
+ KERNEL_OUT_DIR := $(O)
+ 
+ # Re-setup it
+-KERNEL_SRC_DIR := $(word 1, $(KERNEL_SRC_DIR) $(KERNEL_SRC))
++KERNEL_SRC_DIR := $(word 1, $(KERNEL_SRC_DIR) $(KERNEL_SRC) $(srctree))
+ KERNEL_OUT_DIR := $(word 1, $(KERNEL_OUT_DIR) $(KERNEL_SRC_DIR))
+ CONFIG_OS_TYPE := $(word 1, $(CONFIG_OS_TYPE) android)
+ 
+diff --git a/modules/nand/Makefile b/modules/nand/Makefile
+index 56df644..d502d65 100644
+--- a/modules/nand/Makefile
++++ b/modules/nand/Makefile
+@@ -24,7 +24,7 @@ KERNEL_OUT_DIR := $(O)
+ #$(info 1 $(SOC),$(KERNEL_SRC_DIR), $(KERNEL_OUT_DIR) )
+ 
+ # Re-setup it
+-KERNEL_SRC_DIR := $(word 1, $(KERNEL_SRC_DIR) $(KERNEL_SRC))
++KERNEL_SRC_DIR := $(word 1, $(KERNEL_SRC_DIR) $(KERNEL_SRC) $(srctree))
+ KERNEL_OUT_DIR := $(word 1, $(KERNEL_OUT_DIR) $(KERNEL_SRC_DIR))
+ 
+ ifeq ($(KERNEL_SRC_DIR),)
