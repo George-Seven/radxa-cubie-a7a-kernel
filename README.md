@@ -19,19 +19,20 @@ Custom Linux 6.6.98 kernel build with full hardware support and overclocking for
 | **OS** | Debian 11 (EOL) | **Debian 13 Trixie** |
 | **CPU A55** | 1794 MHz (no scaling) | **2800 MHz (+56%, schedutil)** |
 | **CPU A76** | 2002 MHz (no scaling) | **3000 MHz (+50%, schedutil)** |
-| **GPU** | No acceleration | **Vulkan 1.3 + GLES 3.2 (PowerVR BXM-4-64)** |
-| **NPU** | Not working | **3 TOPS, ResNet50 @ 130 FPS** |
+| **GPU** | No acceleration | **GLES 3.2 on PowerVR BXM-4-64 — glmark2-es2 889, color-correct, soak-stable** |
+| **NPU** | Not working | **3 TOPS, ResNet50 ~7.8 ms (~128 FPS), verified** |
+| **RAM** | 1800 MHz | **2040 MHz overclock (LPDDR5-4080), memtester-clean** |
 | **WiFi** | Working | **Working (auto-connect on boot)** |
 | **HDMI** | Working | **Working (1080p + audio)** |
-| **Boot** | Manual | **Autonomous (20s)** |
+| **Boot** | Manual | **Autonomous (power → login ~75 s)** |
 
 ## Hardware Specs
 
 - **SoC:** Allwinner A733 (sun60iw2p1)
 - **CPU:** 2x Cortex-A76 @ 2.0GHz + 6x Cortex-A55 @ 1.79GHz (big.LITTLE)
-- **GPU:** Imagination PowerVR BXM-4-64 MC1 (Vulkan 1.3, GLES 3.2, OpenCL 3.0)
+- **GPU:** Imagination PowerVR BXM-4-64 MC1 — GLES 3.2 validated (glamor on hardware); Vulkan/OpenCL provided by the Imagination DDK blob (not independently benchmarked here)
 - **NPU:** Vivante VIP9000, 3 TOPS @ INT8
-- **RAM:** 12GB LPDDR5 @ 1800MHz (32-bit bus)
+- **RAM:** 12GB LPDDR5 @ 1800 MHz stock — validated overclock to **2040 MHz** (LPDDR5-4080-effective, memtester-clean; 2400 refused training on this 12 GB silicon)
 - **Co-processor:** RISC-V E906 @ 200MHz (SCP/power management)
 - **Storage:** SD card (SDR104), eMMC, UFS (optional)
 - **Display:** HDMI 2.0 (4K decode, 1080p output)
@@ -79,12 +80,13 @@ Stress test (60s, all 8 cores): peak 53C, idle 30C, throttle point 80C.
 
 | Metric | Value |
 |--------|-------|
-| Vulkan | 1.3.277 |
-| OpenGL ES | 3.2 |
-| Max Clock | 1200 MHz (stock: 600 MHz, +100%) |
-| OpenCL FP32 | 159-273 GFLOPS |
-| glmark2-es2 | 32 (GPU accelerated via glamor) |
-| Driver | Imagination proprietary (pvrsrvkm) |
+| OpenGL ES | 3.2 (glamor on PowerVR — validated) |
+| **glmark2-es2 (off-screen)** | **889** at GPU 1008 MHz + RAM 2040 MHz (745 at RAM 1800; 612 bare greeter) |
+| Daily clock | **1008 MHz @ 960 mV** — the efficient peak (1200 MHz is stable but scores lower for more power) |
+| Clock ladder | 600 / 800 / 1008 / 1200 MHz selectable, voltage-matched, boot-menu |
+| Stability | 10-min soak, 0 hardware errors, peak 76 °C under CPU+GPU+RAM load |
+| Driver | Imagination proprietary (pvrsrvkm) + colorfix kernel (R/B swap) |
+| Note | earlier "Vulkan 1.3 / glmark 32 / OpenCL GFLOPS" figures pre-date the real bring-up and were partly software-rendered (llvmpipe); superseded by the validated numbers above |
 
 ### NPU — Vivante VIP9000
 
@@ -92,7 +94,7 @@ Stress test (60s, all 8 cores): peak 53C, idle 30C, throttle point 80C.
 |--------|-------|
 | Frequency | 1008 MHz |
 | Performance | 3 TOPS (INT8) |
-| ResNet50 | 7.67 ms / 130 FPS |
+| ResNet50 | ~7.8 ms / ~128 FPS (verified, /v3 NBG models) |
 | SDK | VIPLite 2.0 (ai-sdk) |
 
 ### Memory — 12GB LPDDR5
@@ -293,7 +295,7 @@ The CPU OPP tables are in `sun60iw2p1-cpu-vf.dtsi`. Overclock entries are added 
 
 The PMIC (AXP8191) supports up to 1540mV on the CPU rails, so there is headroom to push further.
 
-DRAM overclocking (1800 → 2400 MHz) requires rebuilding boot0 from the Allwinner brandy-2.0 SDK — binary patching is not reliable.
+DRAM overclocking: **1800 → 2040 MHz is validated and stable** (memtester-clean; the Orange Pi Zero3W factory LPDDR5 profile, patched into boot0 with a re-signed eGON checksum). 2400 MHz **refused training** on this 12 GB silicon across three configs. Boot0 param editing + checksum works; the tooling is in the recovery kit.
 
 ## Upgrade Path: Debian 11 → 13
 
@@ -366,9 +368,20 @@ sysctl -w vm.dirty_background_ratio=5
 
 ## License
 
-Kernel patches: GPL-2.0 (matching Linux kernel license)
-BSP drivers: Mixed (Allwinner GPL + Imagination MIT/GPL dual-license)
-Documentation and scripts: MIT
+This project's original work (kernel patches, scripts, configs, docs) is licensed
+**GPL-2.0** — see [LICENSE](LICENSE). Copyright © 2026 Rabs9.
+
+- Kernel patches: GPL-2.0 (required — derived from the Linux kernel).
+- BSP drivers: as shipped by Allwinner (GPL) and Imagination (proprietary DDK blob).
+- Released disk images bundle Debian packages under their own upstream licenses.
+
+You may use, modify, and redistribute under GPL-2.0; **please keep attribution to
+this repository as the original source.** This is the upstream — improvements are
+welcome as pull requests here.
+
+> **Status: pre-release / beta.** These images are validated on the reference
+> board but are ahead of the packaged-kernel (`.deb`) milestone. The `.deb`
+> release will be the first "stable" tag; until then, treat releases as beta.
 
 ## Quick Flash (One Command)
 
