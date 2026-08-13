@@ -9,22 +9,22 @@
 
 Custom Linux 6.6.98 kernel build with full hardware support and overclocking for the Radxa Cubie A7A (Allwinner A733 SoC).
 
-**The vendor abandoned this board** — shipping only Debian 11 with a dead-end Linux 5.15 kernel, no GPU acceleration, broken cpufreq, and incomplete hardware support. This project fixes all of that.
+This project started when Radxa shipped this board with Debian 11 and a 5.15 kernel; this repo has been Debian 13 + 6.6.98 since its first release. Radxa's official images have since caught up on the basics (6.6 kernel, Debian 13, GPU/NPU support) — so this repo's focus today is what the official images don't do: validated CPU and RAM overclocking, the GPU color fix, boot repair tooling, and update-proofing.
 
 ## What This Gives You
 
-| Feature | Stock (Radxa) | This Project |
+| Feature | Radxa Official | This Project |
 |---------|---------------|--------------|
-| **Kernel** | 5.15.147 | **6.6.98+** |
-| **OS** | Debian 11 (EOL) | **Debian 13 Trixie** |
-| **CPU A55** | 1794 MHz (no scaling) | **2800 MHz (+56%, schedutil)** |
-| **CPU A76** | 2002 MHz (no scaling) | **3000 MHz (+50%, schedutil)** |
-| **GPU** | No acceleration | **GLES 3.2 on PowerVR BXM-4-64 — glmark2-es2 889, color-correct, soak-stable** |
-| **NPU** | Not working | **3 TOPS, ResNet50 ~7.8 ms (~128 FPS), verified** |
+| **Kernel** | 5.15.147 / 6.6.98+ (newer images) | **6.6.98+** |
+| **OS** | Debian 11 / Debian 13 (A7A/A7Z/A7S) | **Debian 13 Trixie** |
+| **CPU A55** | 1794 MHz | **2800 MHz (+56%, schedutil)** |
+| **CPU A76** | 2002 MHz | **3000 MHz (+50%, schedutil)** |
+| **GPU** | Vulkan 1.3 + GLES 3.2 (PowerVR BXM-4-64) | **GLES 3.2 validated on hardware — glmark2-es2 889, color-correct, soak-stable** |
+| **NPU** | 3 TOPS ([official tutorials](https://docs.radxa.com/en/cubie/a7a/app-dev/npu-dev)) | **3 TOPS, ResNet50 ~7.8 ms (~128 FPS), verified** |
 | **RAM** | 1800 MHz | **2040 MHz overclock (LPDDR5-4080), memtester-clean** |
-| **WiFi** | Working | **Working (auto-connect on boot)** |
-| **HDMI** | Working | **Working (1080p + audio)** |
-| **Boot** | Manual | **Autonomous (power → login ~75 s)** |
+| **WiFi** | Working (auto-connect on boot) | **Working (auto-connect on boot)** |
+| **HDMI** | Working (video + audio) | **Working (1080p + audio)** |
+| **Boot** | Autonomous (new boot flow, no `boot0`) | **Autonomous (power → login ~75 s, verified)** |
 
 ## Hardware Specs
 
