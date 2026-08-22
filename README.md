@@ -7,6 +7,27 @@
 > onward have both fixes baked in and boot hands-free (power → login ≈ 75 s,
 > verified).
 
+> ### ⚠️ Gigabit ethernet: every image before 2026-08-22 needs a one-line fix
+>
+> The shipped device trees set the RGMII `tx-delay` to the vendor value of **12**,
+> which leaves the MAC-to-PHY transmit timing marginal. Transmitted frames get
+> corrupted, so **SSH hangs right after key exchange, and `apt` and bulk transfers
+> hang with it.** The link still reports 1000/full with zero `tx_errors`, short
+> pings still reply, and receive is unaffected — so it reads like a bad cable. It
+> is not: it reproduces across cables, and corruption is data-dependent, meaning a
+> quick hand-rolled test can pass while real traffic fails.
+>
+> **Fix it now, no reboot:**
+>
+> ```sh
+> echo 9 | sudo tee /sys/class/net/end0/device/tx_delay
+> ```
+>
+> **Fix it permanently:** install `linux-dtb-6.6.98-a7a` from the
+> [debs-20260822 release](../../releases/tag/debs-20260822), or apply
+> `a7a-upgrade-pack-20260822.tar.gz` from the same release. Measurements and a
+> reproducer are in [`packaging/README.md`](packaging/README.md).
+
 Custom Linux 6.6.98 kernel build with full hardware support and overclocking for the Radxa Cubie A7A (Allwinner A733 SoC).
 
 This project started when Radxa shipped this board with Debian 11 and a 5.15 kernel; this repo has been Debian 13 + 6.6.98 since its first release. Radxa's official images have since caught up on the basics (6.6 kernel, Debian 13, GPU/NPU support) — so this repo's focus today is what the official images don't do: validated CPU and RAM overclocking, the GPU color fix, boot repair tooling, and update-proofing.
