@@ -224,13 +224,17 @@ Maintainer: $MAINT
 Section: kernel
 Priority: optional
 Installed-Size: $HSIZE
-Depends: build-essential, bc, kmod, flex, bison, libssl-dev
+Depends: kmod
+Recommends: build-essential, bc, flex, bison, libssl-dev
 Provides: linux-headers, linux-headers-$KREL
 Homepage: $HOMEPAGE
 Description: Header files for the Radxa Cubie A7A $KREL kernel
  Build tree for compiling out-of-tree and DKMS modules against the A7A
  $KREL kernel. It is installed in $SRCDIR with
  /lib/modules/$KREL/build pointing at it.
+ .
+ The compiler toolchain is Recommends rather than Depends, so the headers can be
+ installed on a minimal image; install build-essential when you actually build.
  .
  The Allwinner BSP is part of this tree. Out-of-tree builds that reach BSP
  Kconfig must pass BSP_TOP=bsp/ on the make command line. Module.symvers is not
