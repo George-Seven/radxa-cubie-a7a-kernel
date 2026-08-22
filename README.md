@@ -53,8 +53,11 @@ On **older images**, or if you want the boot chain verified every time, use
 missing, backs up the kernel + `extlinux.conf`, runs the upgrade, then
 verifies nothing moved (and restores from backup if it did).
 
-Long-term plan: package the custom kernel as a proper `.deb` (providing
-`linux-image`) so apt cooperates instead of being fenced off.
+The custom kernel is now packaged as proper Debian packages -
+`linux-image-6.6.98-a7a`, `linux-dtb-6.6.98-a7a`, `linux-headers-6.6.98-a7a`
+and `a7a-board-config`. See [`packaging/`](packaging/) for the build script,
+install instructions and the DKMS notes. They package the validated binaries
+rather than rebuilding, and they deliberately leave `extlinux.conf` alone.
 
 ## Benchmark Results
 
@@ -379,9 +382,10 @@ You may use, modify, and redistribute under GPL-2.0; **please keep attribution t
 this repository as the original source.** This is the upstream — improvements are
 welcome as pull requests here.
 
-> **Status: pre-release / beta.** These images are validated on the reference
-> board but are ahead of the packaged-kernel (`.deb`) milestone. The `.deb`
-> release will be the first "stable" tag; until then, treat releases as beta.
+> **Status: pre-release / beta.** The packaged-kernel (`.deb`) milestone is
+> built and validated on the reference board - it boots from the packaged
+> kernel and device tree, and the headers package builds out-of-tree modules -
+> but it is not published as a release yet. Treat current releases as beta.
 
 ## Quick Flash (One Command)
 

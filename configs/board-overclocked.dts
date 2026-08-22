@@ -2140,7 +2140,18 @@
 	pinctrl-names = "default", "sleep";
 	aw,soc-phy-clk-en;
 	/delete-property/ aw,rgmii-clk-ext;
-	tx-delay = <12>;
+	/* RGMII tx-delay: the vendor value of 12 leaves the MAC-to-PHY transmit
+	 * timing marginal, outside this board's working window of 8-10. Frames
+	 * are then corrupted data-dependently on transmit: loss climbs with the
+	 * number of bits on the wire and with payload entropy (random payloads
+	 * lose 12% at 64 bytes and 100% at 1200+, while a single repeated byte
+	 * still gets through). The link stays 1000/full with zero tx_errors and
+	 * receive is unaffected, so it looks like a bad cable; it is not, and it
+	 * reproduces across cables and with USB removed. SSH, apt and bulk
+	 * transfers all hang. 9 is the centre of the passing window.
+	 * Runtime override: echo N > /sys/class/net/end0/device/tx_delay
+	 */
+	tx-delay = <9>;
 	rx-delay = <10>;
 	dwmac3v3-supply = <&reg_dc1sw2>;
 	phy3v3-supply = <&reg_dc1sw1>;
