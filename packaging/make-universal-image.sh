@@ -123,6 +123,9 @@ rm -f  "$MNT"/home/radxa/.bash_history "$MNT"/root/.bash_history 2>/dev/null || 
 : > "$MNT/etc/machine-id" 2>/dev/null || true
 rm -f "$MNT/var/lib/dbus/machine-id" 2>/dev/null || true
 rm -f "$MNT/usr/bin/qemu-aarch64-static"
+# restore the boot armor we lifted in step 4 so the shipped image matches the
+# master: extlinux.conf immutable, so u-boot-update can never regenerate it
+chattr +i "$MNT/boot/extlinux/extlinux.conf" 2>/dev/null \n  && echo "   extlinux.conf immutable flag restored" \n  || echo "   WARNING: could not restore immutable flag"
 sync
 echo "   cleaned; rootfs now $(df -h "$MNT" | awk 'NR==2{print $3}') used"
 
