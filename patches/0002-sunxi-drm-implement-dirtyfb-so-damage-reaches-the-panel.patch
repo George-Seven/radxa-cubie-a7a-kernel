@@ -1,0 +1,56 @@
+From: Rabs9 <241389662+Rabs9@users.noreply.github.com>
+Subject: [PATCH] drm/sunxi: implement DIRTYFB so damage actually reaches the panel
+
+sunxi_drm_gem_fb_funcs never set a .dirty callback, so the DRM_IOCTL_MODE_DIRTYFB
+ioctl returned -ENOSYS. The X modesetting driver probes with exactly that ioctl
+(dispatch_dirty() in hw/xfree86/drivers/modesetting/driver.c) and, on -EINVAL or
+-ENOSYS, permanently disables damage tracking:
+
+    ret = dispatch_dirty_region(scrn, crtc, pixmap, ms->damage, fb_id);
+    if (ret == -EINVAL || ret == -ENOSYS) {
+        ms->dirty_enabled = FALSE;
+        ...
+        xf86DrvMsg(scrn->scrnIndex, X_INFO,
+                   "Disabling kernel dirty updates, not required.\n");
+
+That log line is not X deciding the feature is unnecessary - it is X being told
+the kernel cannot do it. With damage tracking off, dirtied regions are never
+pushed to the display engine, so anything drawn once stays on screen forever:
+cursor trails that never clear, orphaned window content, stale rectangles.
+
+Everything downstream was compensating for this. The vendor stack shipped picom
+with --no-use-damage plus an "xheartbeat" ticker whose only job was to
+manufacture 30Hz damage so the compositor would repaint the entire screen and
+force a flush. That cost ~60% of a CPU core on a 1024x600 panel. With this
+patch, glamor runs on the PowerVR with no compositor at all and Xorg idles at
+about 2%.
+
+drm_atomic_helper_dirtyfb() is the standard helper for atomic drivers; rockchip
+(rockchip_drm_fb.c), vmwgfx and amdgpu use it the same way.
+
+Signed-off-by: Rabs9 <241389662+Rabs9@users.noreply.github.com>
+---
+--- a/drivers/drm/sunxi_drm_drv.c
++++ b/drivers/drm/sunxi_drm_drv.c
+@@ -26,6 +26,7 @@
+ #include <drm/drm_gem_dma_helper.h>
+ #endif
+ #include <drm/drm_gem_framebuffer_helper.h>
++#include <drm/drm_damage_helper.h>
+ #include <drm/drm_print.h>
+ #include <drm/drm_probe_helper.h>
+ #include <drm/drm_vblank.h>
+@@ -109,6 +110,13 @@
+ static const struct drm_framebuffer_funcs sunxi_drm_gem_fb_funcs = {
+ 	.destroy = sunxi_drm_gem_fb_destroy,
+ 	.create_handle = drm_gem_fb_create_handle,
++	/* Without a .dirty callback the DIRTYFB ioctl returns -ENOSYS, and the
++	 * X modesetting driver responds by disabling damage tracking entirely
++	 * ("Disabling kernel dirty updates, not required"). Damaged regions
++	 * then never reach the panel: cursor trails, stale rectangles and
++	 * orphaned window content persist until something repaints the whole
++	 * screen. Same helper rockchip and friends use. */
++	.dirty = drm_atomic_helper_dirtyfb,
+ };
+ 
+ struct drm_framebuffer *
