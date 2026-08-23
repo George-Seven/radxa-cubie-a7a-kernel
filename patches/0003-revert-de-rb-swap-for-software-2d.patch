@@ -1,0 +1,92 @@
+diff --git a/drivers/drm/sunxi_device/hardware/lowlevel_de/afbd/de_fbd_atw.c b/drivers/drm/sunxi_device/hardware/lowlevel_de/afbd/de_fbd_atw.c
+index 1ae6562..ffff884 100644
+--- a/drivers/drm/sunxi_device/hardware/lowlevel_de/afbd/de_fbd_atw.c
++++ b/drivers/drm/sunxi_device/hardware/lowlevel_de/afbd/de_fbd_atw.c
+@@ -743,14 +743,14 @@ int de_afbd_apply_lay(struct de_afbd_handle *handle, struct display_channel_stat
+ 	case DRM_FORMAT_ARGB4444:
+ 	case DRM_FORMAT_ARGB2101010:
+ 	case DRM_FORMAT_ARGB1555:
+-		dwval = 0x1230;
++		dwval = 0x3210;
+ 		break;
+ 	case DRM_FORMAT_ABGR8888:
+ 	case DRM_FORMAT_XBGR8888:
+ 	case DRM_FORMAT_ABGR4444:
+ 	case DRM_FORMAT_ABGR2101010:
+ 	case DRM_FORMAT_ABGR1555:
+-		dwval = 0x3210;
++		dwval = 0x1230;
+ 		break;
+ 	case DRM_FORMAT_RGBA8888:
+ 	case DRM_FORMAT_RGBX8888:
+@@ -768,11 +768,11 @@ int de_afbd_apply_lay(struct de_afbd_handle *handle, struct display_channel_stat
+ 		break;
+ 	case DRM_FORMAT_RGB888:
+ 	case DRM_FORMAT_RGB565:
+-		dwval = 0x1230;
++		dwval = 0x3210;
+ 		break;
+ 	case DRM_FORMAT_BGR888:
+ 	case DRM_FORMAT_BGR565:
+-		dwval = 0x3210;
++		dwval = 0x1230;
+ 		break;
+ 	case DRM_FORMAT_YUV422:
+ 	case DRM_FORMAT_YUV420:
+@@ -785,7 +785,7 @@ int de_afbd_apply_lay(struct de_afbd_handle *handle, struct display_channel_stat
+ 		dwval = 0x3210;
+ 		break;
+ 	default:
+-		dwval = 0x3210;
++		dwval = 0x1230;
+ 		DRM_ERROR("unsupported format=%x\n", fb->format->format);
+ 	}
+ 	reg->fbd_fmt_seq.dwval = dwval;
+diff --git a/drivers/drm/sunxi_device/hardware/lowlevel_de/de_channel.c b/drivers/drm/sunxi_device/hardware/lowlevel_de/de_channel.c
+index 31126a3..471b5ec 100644
+--- a/drivers/drm/sunxi_device/hardware/lowlevel_de/de_channel.c
++++ b/drivers/drm/sunxi_device/hardware/lowlevel_de/de_channel.c
+@@ -120,17 +120,17 @@ int drm_to_de_format(uint32_t format)
+ {
+ 	switch (format) {
+ 	case DRM_FORMAT_ARGB8888:
+-		return DE_FORMAT_ARGB_8888;
++		return DE_FORMAT_ABGR_8888; /* R/B swap: PVR GL writes swapped */
+ 	case DRM_FORMAT_ABGR8888:
+-		return DE_FORMAT_ABGR_8888;
++		return DE_FORMAT_ARGB_8888; /* R/B swap: PVR GL writes swapped */
+ 	case DRM_FORMAT_RGBA8888:
+ 		return DE_FORMAT_RGBA_8888;
+ 	case DRM_FORMAT_BGRA8888:
+ 		return DE_FORMAT_BGRA_8888;
+ 	case DRM_FORMAT_XRGB8888:
+-		return DE_FORMAT_XRGB_8888;
++		return DE_FORMAT_XBGR_8888; /* R/B swap: PVR GL writes swapped */
+ 	case DRM_FORMAT_XBGR8888:
+-		return DE_FORMAT_XBGR_8888;
++		return DE_FORMAT_XRGB_8888; /* R/B swap: PVR GL writes swapped */
+ 	case DRM_FORMAT_RGBX8888:
+ 		return DE_FORMAT_RGBX_8888;
+ 	case DRM_FORMAT_BGRX8888:
+diff --git a/drivers/drm/sunxi_device/hardware/lowlevel_de/tfbd/de_tfbd.c b/drivers/drm/sunxi_device/hardware/lowlevel_de/tfbd/de_tfbd.c
+index 6716f00..8bcefc2 100644
+--- a/drivers/drm/sunxi_device/hardware/lowlevel_de/tfbd/de_tfbd.c
++++ b/drivers/drm/sunxi_device/hardware/lowlevel_de/tfbd/de_tfbd.c
+@@ -111,13 +111,13 @@ static const uint64_t format_modifiers_tfbc[] = {
+ };
+ 
+ const static struct de_tfbd_drmformat_mapping format2tfbc_mapping[] = {
+-	{ DRM_FORMAT_ARGB8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x2103, 0x0c, true },
+-	{ DRM_FORMAT_ABGR8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x0123, 0x0c, true },
++	{ DRM_FORMAT_ARGB8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x0123, 0x0c, true },
++	{ DRM_FORMAT_ABGR8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x2103, 0x0c, true },
+ 	{ DRM_FORMAT_RGBA8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x3210, 0x0c, true },
+ 	{ DRM_FORMAT_BGRA8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x1230, 0x0c, true },
+ 
+-	{ DRM_FORMAT_XRGB8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x2103, 0x0c, true },
+-	{ DRM_FORMAT_XBGR8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x0123, 0x0c, true },
++	{ DRM_FORMAT_XRGB8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x0123, 0x0c, true },
++	{ DRM_FORMAT_XBGR8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x2103, 0x0c, true },
+ 	{ DRM_FORMAT_RGBX8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x3210, 0x0c, true },
+ 	{ DRM_FORMAT_BGRX8888, {8, 8, 8, 8}, {16, 4}, {16, 4}, 0x1230, 0x0c, true },
+ 
