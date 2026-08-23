@@ -16,7 +16,9 @@ set -euo pipefail
 SRC=${1:?usage: sanitise-image.sh SRC OUT SECRET}
 OUT=${2:?usage: sanitise-image.sh SRC OUT SECRET}
 SECRET=${3:?usage: sanitise-image.sh SRC OUT SECRET}
-TOOL=/home/quantumshift/imgbuild/a7a-reset-identity
+# a7a-reset-identity to install into the image; defaults to the copy in this
+# repo so the script works from a fresh clone.
+TOOL=${TOOL:-"$(cd "$(dirname "$0")/.." && pwd)/tools/a7a-reset-identity"}
 M=/tmp/cr_src
 msg(){ echo; echo "=== $*"; }
 

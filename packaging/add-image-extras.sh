@@ -10,8 +10,11 @@ set -euo pipefail
 
 IMG=${1:?usage: add_extras.sh IMAGE standard|maximum}
 VARIANT=${2:?usage: add_extras.sh IMAGE standard|maximum}
-KIT=/mnt/c/Users/QuantumShift/RadxaGolden/radxa-recovery
-TOOLKIT=/home/quantumshift/a7a-build/radxa-a7a-toolkit
+# Path to the recovery kit (firmware blobs, modules). Override for your setup:
+#   KIT=/path/to/radxa-a7a-recovery ./add-image-extras.sh ...
+KIT=${KIT:?set KIT to your radxa-a7a-recovery checkout}
+# Path to the toolkit checkout (game launchers, helper binaries).
+TOOLKIT=${TOOLKIT:?set TOOLKIT to your radxa-a7a-toolkit checkout}
 FW_MAX="$KIT/firmware/lab-V-2136-vdd2-1120.img"
 KREL=6.6.98+
 MNT=/tmp/extras
