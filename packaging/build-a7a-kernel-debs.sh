@@ -10,6 +10,36 @@ MAINT=${MAINT:-"Rabs9 <241389662+Rabs9@users.noreply.github.com>"}
 HOMEPAGE=${HOMEPAGE:-https://github.com/Rabs9/radxa-cubie-a7a-kernel}
 UPSTREAM=${UPSTREAM:-Rabs9/radxa-cubie-a7a-kernel}
 SRCKERNEL=${SRCKERNEL:-/boot/vmlinuz-6.6.98+-colorfix}
+
+# The kernel bakes KBUILD_BUILD_USER@KBUILD_BUILD_HOST into linux_banner at
+# compile time, so an unsanitised vmlinuz prints the build machine's account and
+# hostname in `uname -v` and /proc/version on every board that runs it. vmlinuz
+# here is a raw arm64 Image - not compressed, not signed, nothing checksums it -
+# and the banner is plain string data, so an EQUAL-LENGTH in-place replacement is
+# inert. Set BANNER_ID to the identity you want shown.
+BANNER_ID=${BANNER_ID:-builder@a7a-kernel-buildhost}
+scrub_build_banner() {
+    local img="$1"
+    local found
+    found=$(strings -a "$img" 2>/dev/null | grep -aoE 'Linux version [^ ]+ \(([^)]*)\)' | head -1 | sed -E 's/.*\((.*)\)/\1/')
+    [ -n "$found" ] || { echo "   banner: no user@host found, nothing to do"; return 0; }
+    if [ "$found" = "$BANNER_ID" ]; then echo "   banner: already '$BANNER_ID'"; return 0; fi
+    if [ ${#found} -ne ${#BANNER_ID} ]; then
+        echo "   banner: WARNING cannot scrub - '$found' is ${#found} bytes but"
+        echo "           BANNER_ID '$BANNER_ID' is ${#BANNER_ID}; lengths must match."
+        echo "           Rebuild the kernel with KBUILD_BUILD_USER/KBUILD_BUILD_HOST instead."
+        return 1
+    fi
+    python3 - "$img" "$found" "$BANNER_ID" <<'PYEOF'
+import sys
+p, old, new = sys.argv[1], sys.argv[2].encode(), sys.argv[3].encode()
+d = open(p, 'rb').read()
+n = d.count(old)
+open(p, 'wb').write(d.replace(old, new))
+print(f"   banner: replaced {n} occurrence(s) of {old.decode()} with {new.decode()}")
+PYEOF
+}
+
 SYSMAP=${SYSMAP:-/home/radxa/debbuild/src/System.map-6.6.98+}
 B=${B:-/home/radxa/debbuild}
 OUT=$B/out
@@ -58,6 +88,7 @@ P=$B/pkg/linux-image-$ABI
 mkdir -p "$P/DEBIAN" "$P/boot" "$P/lib/modules/$KREL"
 
 install -m 0644 "$SRCKERNEL" "$P/boot/vmlinuz-$KREL"
+scrub_build_banner "$P/boot/vmlinuz-$KREL"
 install -m 0644 "$SYSMAP"    "$P/boot/System.map-$KREL"
 zcat /proc/config.gz > "$P/boot/config-$KREL"
 chmod 0644 "$P/boot/config-$KREL"
