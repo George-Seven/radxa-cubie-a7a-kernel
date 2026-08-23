@@ -24,6 +24,12 @@ case "${1:-}" in
   *) echo "unknown option: $1 (try --help)" >&2; exit 2 ;;
 esac
 
+ask(){ # ask PROMPT -> 0 if yes. No tty (piped install) = keep, do not guess.
+  local a=""
+  if [ -r /dev/tty ] && [ -t 1 ]; then read -r -p "  $1 [y/N] " a </dev/tty || a=""
+  else echo "  $1 -- no terminal to ask at, keeping it; rerun with --yes to remove"; return 1; fi
+  [ "${a,,}" = y ]; }
+
 [ "$(id -u)" = 0 ] || { echo "run as root: sudo $0 ${1:-}" >&2; exit 1; }
 
 R=${A7A_ROOT:-}            # set to operate on a mounted image instead of /
@@ -85,8 +91,7 @@ if [ "${#NMS[@]}" -gt 0 ]; then
       interactive)
         echo
         say "Any profile above that is not YOUR network came from the build machine."
-        read -r -p "  Remove all saved network profiles? you will reconnect normally [y/N] " a </dev/tty
-        [ "${a,,}" = y ] && doit=1 ;;
+        ask "Remove all saved network profiles? you will reconnect normally" && doit=1 ;;
     esac
     if [ "$doit" = 1 ]; then
         rm -f "$R"/etc/NetworkManager/system-connections/*.nmconnection
@@ -97,10 +102,11 @@ if [ "${#NMS[@]}" -gt 0 ]; then
 else say "none saved - ok"; fi
 
 echo "== trusted ssh keys (authorized_keys)"
+akfound=0
 for h in $HOMES "$R/root"; do
     ak="$h/.ssh/authorized_keys"
     [ -s "$ak" ] || continue
-    found=1
+    found=1; akfound=1
     say "$ak lets these keys log in without a password:"
     while read -r l; do [ -n "$l" ] && say "    $(echo "$l" | ssh-keygen -lf - 2>/dev/null || echo "$l" | cut -c1-60)"; done < "$ak"
     doit=0
@@ -108,12 +114,13 @@ for h in $HOMES "$R/root"; do
       yes) doit=1 ;;
       check) ;;
       interactive)
-        read -r -p "  Remove keys you did not add yourself? [y/N] " a </dev/tty
-        [ "${a,,}" = y ] && doit=1 ;;
+        ask "Remove keys you did not add yourself?" && doit=1 ;;
     esac
     if [ "$doit" = 1 ]; then rm -f "$ak"; say "-> removed"; did=1
     else [ "$MODE" = check ] || say "-> kept"; fi
 done
+
+[ "${akfound:-0}" = 0 ] && say "none - ok"
 
 echo "== inherited desktop history and caches"
 n=0
