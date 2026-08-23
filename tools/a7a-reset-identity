@@ -1,0 +1,165 @@
+#!/bin/bash
+# a7a-reset-identity - give this board its own identity instead of the build
+# machine's.
+#
+# These images are dumps of a working development card, so a freshly flashed
+# board inherits that card's host keys, TLS certificate, machine-id, saved
+# network profiles and desktop caches. Two boards flashed from the same image
+# are therefore indistinguishable on the network, and both answer to whatever
+# the build machine trusted. This resets all of it.
+#
+#   a7a-reset-identity            interactive (default)
+#   a7a-reset-identity --check    report only, change nothing
+#   a7a-reset-identity --yes      no prompts, remove everything inherited
+#
+# Safe to run more than once.
+set -u
+
+MODE=interactive
+case "${1:-}" in
+  --check) MODE=check ;;
+  --yes|-y) MODE=yes ;;
+  --help|-h) sed -n '2,16p' "$0" | sed 's/^# \?//'; exit 0 ;;
+  "") ;;
+  *) echo "unknown option: $1 (try --help)" >&2; exit 2 ;;
+esac
+
+[ "$(id -u)" = 0 ] || { echo "run as root: sudo $0 ${1:-}" >&2; exit 1; }
+
+R=${A7A_ROOT:-}            # set to operate on a mounted image instead of /
+HOMES=$(getent passwd 2>/dev/null | awk -F: '$3>=1000 && $3<65534 {print $6}')
+[ -n "$HOMES" ] || HOMES="$R/home/radxa"
+[ -n "$R" ] && HOMES=$(ls -d "$R"/home/* 2>/dev/null)
+
+did=0; found=0
+say(){ printf '  %s\n' "$*"; }
+act(){ [ "$MODE" = check ] && return 1 || return 0; }
+
+echo "== machine identity"
+if [ -s "$R/etc/machine-id" ]; then
+    found=1; say "machine-id is set (shared with every board from this image)"
+    if act; then : > "$R/etc/machine-id"; rm -f "$R/var/lib/dbus/machine-id"
+        say "-> cleared; systemd generates a fresh one at next boot"; did=1; fi
+else say "machine-id already blank - ok"; fi
+
+echo "== ssh host keys"
+hk=$(ls "$R"/etc/ssh/ssh_host_* 2>/dev/null | wc -l)
+if [ "$hk" -gt 0 ]; then
+    found=1; say "$hk host key files present"
+    say "fingerprints currently offered to anyone connecting:"
+    for f in "$R"/etc/ssh/ssh_host_*.pub; do
+        [ -e "$f" ] && say "    $(ssh-keygen -lf "$f" 2>/dev/null)"
+    done
+    if act; then rm -f "$R"/etc/ssh/ssh_host_*
+        if [ -z "$R" ]; then ssh-keygen -A >/dev/null 2>&1 && say "-> regenerated for this board"
+        else say "-> removed; will regenerate on first boot"; fi
+        did=1; fi
+else say "no host keys - will be generated on first boot"; fi
+
+echo "== tls (snakeoil) certificate"
+if [ -e "$R/etc/ssl/private/ssl-cert-snakeoil.key" ]; then
+    found=1; say "default TLS key present (identical on every board from this image)"
+    if act; then
+        rm -f "$R/etc/ssl/private/ssl-cert-snakeoil.key" "$R/etc/ssl/certs/ssl-cert-snakeoil.pem"
+        [ -z "$R" ] && make-ssl-cert generate-default-snakeoil --force-overwrite >/dev/null 2>&1
+        say "-> regenerated"; did=1; fi
+else say "none present - ok"; fi
+
+echo "== fwupd device identity"
+if [ -e "$R/var/lib/fwupd/pki/secret.key" ]; then
+    found=1; say "fwupd client key present (shared by every board from this image)"
+    if act; then rm -rf "$R"/var/lib/fwupd/pki
+        say "-> removed; fwupd regenerates its own on next use"; did=1; fi
+else say "none present - ok"; fi
+
+echo "== saved network profiles"
+mapfile -t NMS < <(ls "$R"/etc/NetworkManager/system-connections/*.nmconnection 2>/dev/null)
+if [ "${#NMS[@]}" -gt 0 ]; then
+    found=1
+    say "these Wi-Fi/ethernet profiles are stored on this board, passwords included:"
+    for f in "${NMS[@]}"; do say "    $(basename "$f" .nmconnection)"; done
+    doit=0
+    case "$MODE" in
+      yes) doit=1 ;;
+      check) ;;
+      interactive)
+        echo
+        say "Any profile above that is not YOUR network came from the build machine."
+        read -r -p "  Remove all saved network profiles? you will reconnect normally [y/N] " a </dev/tty
+        [ "${a,,}" = y ] && doit=1 ;;
+    esac
+    if [ "$doit" = 1 ]; then
+        rm -f "$R"/etc/NetworkManager/system-connections/*.nmconnection
+        rm -rf "$R"/var/lib/NetworkManager/* 2>/dev/null
+        rm -f "$R"/etc/wpa_supplicant/wpa_supplicant*.conf 2>/dev/null
+        say "-> removed"; did=1
+    else [ "$MODE" = check ] || say "-> kept"; fi
+else say "none saved - ok"; fi
+
+echo "== trusted ssh keys (authorized_keys)"
+for h in $HOMES "$R/root"; do
+    ak="$h/.ssh/authorized_keys"
+    [ -s "$ak" ] || continue
+    found=1
+    say "$ak lets these keys log in without a password:"
+    while read -r l; do [ -n "$l" ] && say "    $(echo "$l" | ssh-keygen -lf - 2>/dev/null || echo "$l" | cut -c1-60)"; done < "$ak"
+    doit=0
+    case "$MODE" in
+      yes) doit=1 ;;
+      check) ;;
+      interactive)
+        read -r -p "  Remove keys you did not add yourself? [y/N] " a </dev/tty
+        [ "${a,,}" = y ] && doit=1 ;;
+    esac
+    if [ "$doit" = 1 ]; then rm -f "$ak"; say "-> removed"; did=1
+    else [ "$MODE" = check ] || say "-> kept"; fi
+done
+
+echo "== inherited desktop history and caches"
+n=0
+for h in $HOMES; do
+    for p in .local/share/klipper .local/share/kactivitymanagerd .local/share/Trash \
+             .local/share/RecentDocuments .local/share/recently-used.xbel \
+             .config/kdeconnect .cache .bash_history .python_history .lesshst .viminfo \
+             .gnupg .pki .netrc .git-credentials; do
+        [ -e "$h/$p" ] && { n=$((n+1)); [ "$MODE" = check ] && say "    $h/$p"; }
+    done
+done
+if [ "$n" -gt 0 ]; then
+    found=1; say "$n items (clipboard history, activity log, trash, keyrings, shell history)"
+    if act; then
+        for h in $HOMES; do
+            rm -rf "$h"/.local/share/klipper "$h"/.local/share/kactivitymanagerd \
+                   "$h"/.local/share/Trash "$h"/.local/share/RecentDocuments \
+                   "$h"/.local/share/recently-used.xbel "$h"/.config/kdeconnect \
+                   "$h"/.cache "$h"/.gnupg "$h"/.pki 2>/dev/null
+            rm -f  "$h"/.bash_history "$h"/.python_history "$h"/.lesshst \
+                   "$h"/.viminfo "$h"/.netrc "$h"/.git-credentials 2>/dev/null
+        done
+        say "-> removed"; did=1
+    fi
+else say "none - ok"; fi
+
+echo "== leftover build-machine directories"
+n=0
+for d in "$R"/root/debian12-backup "$R"/root/debian13-backup \
+         "$R"/root/pre-upgrade-backup "$R"/root/overclocked-backup; do
+    [ -e "$d" ] && { n=$((n+1)); say "    $d"; }
+done
+if [ "$n" -gt 0 ]; then
+    found=1
+    if act; then rm -rf "$R"/root/debian12-backup "$R"/root/debian13-backup \
+                        "$R"/root/pre-upgrade-backup "$R"/root/overclocked-backup
+        say "-> removed ($n)"; did=1; fi
+else say "none - ok"; fi
+
+echo
+if [ "$MODE" = check ]; then
+    [ "$found" = 1 ] && echo "Inherited identity found. Run 'sudo a7a-reset-identity' to reset it." \
+                     || echo "This board already has its own identity."
+elif [ "$did" = 1 ]; then
+    echo "Done. Reboot so the new identity is picked up everywhere:  sudo reboot"
+    echo "Your SSH clients will warn that the host key changed - that is this script's doing."
+else
+    echo "Nothing to change."
+fi

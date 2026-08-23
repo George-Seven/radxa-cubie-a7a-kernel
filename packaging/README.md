@@ -158,3 +158,35 @@ echo 9 | sudo tee /sys/class/net/end0/device/tx_delay
   kernel, so the modules still load correctly.
 * BSP-aware builds must pass `BSP_TOP=bsp/`; `bsp/Kconfig` sources
   `$(BSP_TOP)platform/Kconfig` and fails without it.
+
+## Board identity
+
+These images are produced by dumping a working development card, so without a
+deliberate step every board flashed from one inherits that card's identity: the
+SSH host keys, the snakeoil TLS certificate, the machine-id, the fwupd client
+key, saved network profiles and the desktop's caches. Two boards from the same
+image are then indistinguishable on the network.
+
+`packaging/sanitise-image.sh SRC OUT MARKER` handles this at build time. It
+resets the user profile wholesale rather than deleting known-bad files one at a
+time, then copies the surviving tree into a **virgin ext4** with the same UUID,
+because deleting a file leaves its blocks, its journal records and its directory
+entry behind. Nothing is published from a filesystem that ever held the data.
+
+The gate at the end deliberately does two different kinds of check:
+
+  * a raw byte scan for strings that could never legitimately appear in a
+    distributed image, which is what catches deleted-file residue;
+  * a structural walk for actual credential *files*.
+
+Byte-grepping for `BEGIN PRIVATE KEY` or `klipper` does not work and was tried:
+`ssh-keygen`, `libgnutls`, `libnm` and friends all contain those PEM headers as
+literal strings because they are the programs that write them, and `klipper` is
+a KDE package the image is supposed to ship. Those patterns cannot tell a key
+file apart from a program that knows what a key looks like. The structural check
+can, and is what found `/var/lib/fwupd/pki/secret.key`.
+
+`tools/a7a-reset-identity` is the same job for a board that is already running.
+It regenerates host keys, the TLS certificate, the machine-id and the fwupd key
+without asking, and prompts before touching saved network profiles or
+`authorized_keys`, since those may be the owner's. `--check` reports only.
