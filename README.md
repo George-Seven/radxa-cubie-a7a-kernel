@@ -7,6 +7,13 @@ took this board from "boots if you're lucky" to a daily-usable desktop.
 Everything here is built and verified on real hardware. Where a number appears,
 it was measured — the date it was measured is stated.
 
+> **A year ago this board shipped with Debian 11 and a device tree that did not
+> match its own hardware.** Getting from there to here took a lot of tireless
+> nights, a great deal of trial and error, and a few occasions where a corrupted
+> image cost months of work. If you want the story rather than the specs —
+> including what the RAM, the GPU and the boot chain actually turned out to be —
+> it is in **[docs/THE-JOURNEY.md](docs/THE-JOURNEY.md)**.
+
 ---
 
 ## Before you flash: you need active cooling
@@ -148,6 +155,7 @@ no re-download needed.
 
 | | |
 |---|---|
+| [docs/THE-JOURNEY.md](docs/THE-JOURNEY.md) | How this project came about, and what each problem turned out to be |
 | [docs/PACKAGES.md](docs/PACKAGES.md) | Installing on an existing system, and what each package does |
 | [docs/BENCHMARKS.md](docs/BENCHMARKS.md) | Every measured number, with dates and method |
 | [docs/HARDWARE.md](docs/HARDWARE.md) | Specs, overclocking, boot config, tuning, known limits |
