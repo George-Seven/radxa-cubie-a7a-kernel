@@ -1,4 +1,14 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
+/*
+ * Copyright (C) 2026 Rabs9
+ *
+ * https://github.com/Rabs9/radxa-cubie-a7a
+ *
+ * CPU voltage/frequency mapping tables for the A733, extended beyond the
+ * vendor ceiling for the overclocked image variant. Derived from the
+ * Allwinner BSP tables; the added operating points and their voltage
+ * floors are the modification.
+ */
 /{
 	vf_mapping_table: vf_mapping_table {
 		vf-version = "V0.9";

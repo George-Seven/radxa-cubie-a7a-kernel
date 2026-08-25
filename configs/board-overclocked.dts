@@ -1,4 +1,18 @@
 // SPDX-License-Identifier: (GPL-2.0+ or MIT)
+// Copyright (C) 2026 Rabs9
+//
+// https://github.com/Rabs9/radxa-cubie-a7a
+//
+// Board device tree for the Radxa Cubie A7A (Allwinner A733 / sun60iw2p1).
+//
+// Modifications in this file:
+//   - RGMII transmit delay corrected from the vendor value of 12 to 9
+//     (rx-delay 10). The vendor value sits outside the window the PHY
+//     accepts, corrupting frames larger than ~250 bytes; this is the fix
+//     for gigabit ethernet on this board.
+//   - Regulator and supply routing reviewed, including the dcdc4 rail
+//     that feeds gpu-supply.
+//   - Operating point tables wired up for the overclocked variant.
 
 /dts-v1/;
 

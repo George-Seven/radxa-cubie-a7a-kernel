@@ -1,4 +1,12 @@
 // SPDX-License-Identifier: (GPL-2.0+ or MIT)
+// Copyright (C) 2026 Rabs9
+//
+// https://github.com/Rabs9/radxa-cubie-a7a
+//
+// GPU, DSU/L3 and memory operating point tables for the A733, extended
+// beyond the vendor ceiling for the overclocked image variant. Derived
+// from the Allwinner BSP; the added operating points, the DSU opp table
+// wiring and their voltage floors are the modification.
 #include <dt-bindings/clock/sun60iw2-ccu.h>
 #include <dt-bindings/clock/sun60iw2-rtc.h>
 #include <dt-bindings/clock/sun60iw2-r-ccu.h>

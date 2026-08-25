@@ -15,6 +15,15 @@
  * Author: zhengwanyu<zhengwanyu@allwinnertech.com>
  */
 
+/*
+ * Modifications by Rabs9 (2026):
+ *   Platform glue for the PowerVR DDK on sun60iw2p1 - operating point and
+ *   clock handling adjusted for the overclocked device tree variants.
+ *
+ * Upstream copyright and licence above are unchanged and still apply.
+ * https://github.com/Rabs9/radxa-cubie-a7a
+ */
+
 #include <asm/io.h>
 #include <linux/clk.h>
 #include <linux/reset.h>
