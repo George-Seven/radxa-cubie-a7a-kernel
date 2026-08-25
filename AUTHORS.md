@@ -24,6 +24,25 @@ The anchor is the GitHub account itself: **numeric id `241389662`, created
 old name and the new one to one account. Nothing in that chain depends on
 taking anyone's word for it.
 
+## Signing key
+
+Releases from 2026-08-25 onward are signed with:
+
+```
+ed25519/EF8243C0E3ADC6EA
+C9E8 FC3E 6B94 6616 B0BB  B09B EF82 43C0 E3AD C6EA
+Rabs9 <241389662+Rabs9@users.noreply.github.com>
+```
+
+The public key is in this repository as
+[`Rabs9-public-key.asc`](Rabs9-public-key.asc). Verification instructions are in
+the [README](README.md#verifying-releases).
+
+Publishing the fingerprint here, in the repository rather than only alongside
+the release assets, is deliberate: a signature is only meaningful if the key can
+be checked somewhere an attacker who controls the download does not also
+control.
+
 ## Timeline
 
 | date | what |

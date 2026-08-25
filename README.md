@@ -182,6 +182,46 @@ no re-download needed.
 
 ---
 
+
+## Verifying releases
+
+Release assets are signed with GPG. The signature proves two things: the file is
+byte-identical to what was published, and it was signed by the holder of this
+key.
+
+**Fingerprint** — check this against the key you import, not just the signature:
+
+```
+C9E8 FC3E 6B94 6616 B0BB  B09B EF82 43C0 E3AD C6EA
+```
+
+Import the key and verify:
+
+```bash
+gpg --import Rabs9-public-key.asc          # from this repository
+gpg --fingerprint EF8243C0E3ADC6EA
+
+# then, having downloaded a release asset and its .asc:
+gpg --verify SHA256SUMS.asc SHA256SUMS
+sha256sum -c SHA256SUMS
+
+# or verify an image directly
+gpg --verify a7a-standard-20260825.img.xz.asc a7a-standard-20260825.img.xz
+```
+
+A good signature prints `Good signature from "Rabs9 <...>"`. You will also see a
+warning that the key is not certified with a trusted signature — that is normal
+and expected. It means nobody else has vouched for the key, not that anything is
+wrong. **What matters is that the fingerprint matches the one above.**
+
+That check is the whole point: an attacker who replaced both a file and its
+signature would also have to make the fingerprint match, and they cannot.
+
+The key never expires. If it is ever compromised, a revocation certificate will
+be published here and at the same fingerprint.
+
+---
+
 ## License
 
 Original work here — kernel patches, device trees, scripts, packaging, docs —
