@@ -89,16 +89,28 @@ rather than rebuilding, and they deliberately leave `extlinux.conf` alone.
 | Cortex-A55 | 6 | 1794 MHz | **2800 MHz (+56%)** | 1540 mV (PMIC max) |
 | Cortex-A76 | 2 | 2002 MHz | **3000 MHz (+50%)** | 1540 mV (PMIC max) |
 
-Stress test (60s, all 8 cores): peak 53C, idle 30C, throttle point 80C.
+Stress test (60s, all 8 cores, performance governor, 2026-08-24): 62C at
+5s rising to **76C at 60s** and still climbing, idle 37C. No frequency
+throttling occurred - the A76 pair held 3000 MHz and the A55 cluster held
+2800 MHz for the whole run; the fan ramped to state 4 and absorbed it.
+The passive trip is 80C and the critical trip is 110C, so a sustained
+all-core load does approach the passive trip. Active cooling is not
+optional at these clocks.
 
 ### LLM Inference (llama.cpp)
 
 | Metric | Value |
 |--------|-------|
-| Model | Qwen2.5 1.5B Q4_K_M |
-| Prompt speed | 36 tok/s |
-| Generation speed | 6 tok/s |
-| Threads | 8 (A55+A76) |
+| Model | Qwen3 4B Instruct Q4_0 (the shipped default) |
+| Prompt processing | **28.1 tok/s** (pp128, 8 threads) |
+| Generation | **4.7 tok/s** (tg32, 2 threads) |
+| Threads | 2 for generation, 8 for prompt - `a7a-llm` sets both |
+
+Measured 2026-08-24 on the maximum-overclock image with the performance
+governor pinned, as `a7a-llm serve` does. The two phases want opposite
+thread counts: generation is memory-bound and 2 threads on the A76 pair
+beat 8 by 36%, while prompt processing is compute-bound and 8 threads beat
+2 by 39%. llama.cpp takes `-t` and `-tb` separately, so both are used.
 
 ### GPU — PowerVR BXM-4-64 MC1
 

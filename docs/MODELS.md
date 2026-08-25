@@ -17,15 +17,56 @@ a7a-llm serve         # start the server on :8080
 Use **Q4_0**, not Q4_K_M, on this board. llama.cpp repacks Q4_0 into
 aarch64 dotprod-interleaved layouts, and this SoC has `asimddp`. Measured on the
 A7A: **17.1 tok/s prompt processing on Q4_0 versus 7.5 on Q4_K_M** — about 2.3×,
-at the same generation speed. A K-quant looks like the smarter choice on paper
+at the same generation speed. (Both halves measured 2026-08-13, before the
+memory and DSU overclocks; the ratio still holds, the absolute numbers are
+higher now — see the throughput table below.) A K-quant looks like the smarter choice on paper
 and is the wrong one here.
+
+## Measured throughput
+
+Qwen3 4B Instruct Q4_0, the shipped default, on the maximum-overclock image
+(A76 3000 MHz, A55 2800 MHz, DSU/L3 1352 MHz, RAM 2136 MHz) with the
+performance governor pinned — the configuration `a7a-llm serve` sets up:
+
+| phase | threads | tok/s |
+|---|---:|---:|
+| prompt processing (pp128) | 8 | **28.06 ± 0.04** |
+| generation (tg32) | 2 | **4.67 ± 0.00** |
+
+Measured 2026-08-24 with `llama-bench`, 3 repetitions each.
+
+### Why the two phases use different thread counts
+
+They scale in opposite directions, and using one setting for both costs real
+throughput either way:
+
+| threads | prompt (pp128) | generation (tg32) |
+|---:|---:|---:|
+| 2 | 18.46 | **4.68** |
+| 4 | 19.58 | 4.00 |
+| 6 | 23.10 | 3.72 |
+| 8 | **25.72** | 3.44 |
+
+*(sweep run under schedutil, so the absolute values are lower than the pinned
+figures above; the trend is the point.)*
+
+Generation is memory-bound: ggml splits work evenly across threads and waits at
+a barrier every layer, so adding the six slow A55 cores makes the two fast A76
+cores wait. Prompt processing is compute-bound and scales normally. llama.cpp
+accepts `-t` for generation and `-tb` for batch/prompt, so `a7a-llm` sets
+`-t 2 -tb 8` and gets the better half of both.
+
+This is not a thermal artefact: across the sweep the board warmed from 32C to
+64C, and prompt throughput *rose* over exactly that ramp while generation fell.
+A 60s all-core load at 3000/2800 MHz holds full clocks to 76C with no
+frequency throttling.
 
 ## Recommended models
 
 | model | file | size | why |
 |---|---|---|---|
 | **Qwen3 4B Instruct** | `Qwen3-4B-Instruct-2507-Q4_0.gguf` | ~2.4 GB | the default — comfortable on 12 GB with a desktop running |
-| **Ling-mini 2.0** | `inclusionAI_Ling-mini-2.0-Q4_0.gguf` | ~9.0 GB | nearly 2× faster (6.63 vs 3.33 tok/s) — **headless only**, see the warning |
+| **Ling-mini 2.0** | `inclusionAI_Ling-mini-2.0-Q4_0.gguf` | ~9.0 GB | nearly 2× faster (6.63 vs 3.33 tok/s, both 2026-08-13) — **headless only**, see the warning |
 | **Qwen3 1.7B** | `Qwen3-1.7B-Q4_0.gguf` | ~1.1 GB | fastest, lightest, good for quick tasks |
 | **Gemma 3 4B** | `gemma-3-4b-it-Q4_0.gguf` | ~2.5 GB | strong general alternative to Qwen3 4B |
 
