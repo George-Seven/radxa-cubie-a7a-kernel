@@ -187,6 +187,9 @@ no re-download needed.
 Original work here — kernel patches, device trees, scripts, packaging, docs —
 is **GPL-2.0**, see [LICENSE](LICENSE). Copyright © 2026 Rabs9.
 
+Provenance, the identity chain across earlier commits, and the archive
+reference are in [AUTHORS.md](AUTHORS.md).
+
 - Kernel patches: GPL-2.0 (required, derived from Linux).
 - BSP drivers: as shipped by Allwinner (GPL) and Imagination (proprietary DDK blob).
 - Released images bundle Debian packages under their own upstream licenses.
