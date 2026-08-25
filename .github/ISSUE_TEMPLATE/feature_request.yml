@@ -1,0 +1,53 @@
+name: Suggestion or request
+description: Something you would like this board to do that it does not do yet
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Suggestions and requests are genuinely welcome** — not just bug reports.
+        If there is something you want this board to do that it does not do yet,
+        say so. Hardware requests are fine too; if you want a variant or
+        configuration characterised that I do not have, it is useful to know.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What would you like?
+      description: Describe it in your own words — no need for technical detail.
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: What are you trying to do?
+      description: >
+        The underlying goal, if there is one. Sometimes there is an easier way
+        to get there than the specific thing being asked for.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Roughly what area?
+      options:
+        - Kernel or device tree
+        - Overclocking / clock control
+        - Graphics or desktop
+        - The local LLM app
+        - Games
+        - Networking (ethernet or wifi)
+        - Packaging or installation
+        - Documentation
+        - A different distribution (Ubuntu, Parrot, etc.)
+        - Something else
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: offer
+    attributes:
+      label: Optional
+      options:
+        - label: I would be willing to test this on my board
+        - label: I would be willing to help implement it

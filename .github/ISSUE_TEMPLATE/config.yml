@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Board will not boot after flashing an older image
+    url: https://github.com/Rabs9/radxa-cubie-a7a-kernel/tree/main/boot-fix
+    about: Images before 2026-08-10 had a boot-chain defect. This repairs the card in place - no re-download, about five minutes.
+  - name: Gigabit ethernet hangs SSH or apt
+    url: https://github.com/Rabs9/radxa-cubie-a7a-kernel/blob/main/packaging/README.md
+    about: Known and fixed. Run `echo 9 | sudo tee /sys/class/net/end0/device/tx_delay` for an immediate fix, then install linux-dtb-6.6.98-a7a.
+  - name: Choosing a model for the local LLM
+    url: https://github.com/Rabs9/radxa-cubie-a7a-kernel/blob/main/docs/MODELS.md
+    about: Which quantisation to use, and why Q4_0 beats Q4_K_M on this board.
