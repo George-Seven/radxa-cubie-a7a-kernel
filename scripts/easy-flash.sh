@@ -5,12 +5,13 @@
 # Usage: sudo ./easy-flash.sh /dev/sdX
 #
 # Downloads and flashes the complete Debian 13 + Linux 6.6.98+ image
-# with CPU @ 2800/3000MHz, GPU @ 1200MHz, WiFi, NPU — all working.
+# with CPU @ 3000/2800 MHz, GPU @ 1008 MHz, wifi, NPU and gigabit
+# ethernet working. Grows to fill the card on first boot.
 # =============================================================================
 set -euo pipefail
 
 DEVICE="${1:-}"
-REPO="https://github.com/Rabs9/radxa-cubie-a7a-kernel/releases/download/v3.0.0"
+REPO="https://github.com/Rabs9/radxa-cubie-a7a-kernel/releases/download/images-20260825"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -59,11 +60,31 @@ read -p "Continue? [y/N] " -n 1 -r
 echo
 [[ $REPLY =~ ^[Yy]$ ]] || { log "Aborted."; exit 0; }
 
-IMAGE="radxa-cubie-a7a-debian13-oc-v3.0.0.img.xz"
+# The conservative variant. For the maximum-overclock image substitute
+# a7a-maximum-20260825.img.xz - see the release notes for the difference.
+IMAGE="a7a-standard-20260825.img.xz"
 
 # Download
 log "Downloading image (1.9GB compressed, 10GB uncompressed)..."
 wget -q --show-progress -O "/tmp/$IMAGE" "$REPO/$IMAGE"
+
+# Verify before writing. A truncated or tampered download that gets dd'd to a
+# card produces a board that fails in confusing ways much later.
+log "Verifying checksum"
+if wget -q -O /tmp/SHA256SUMS "$REPO/SHA256SUMS" 2>/dev/null; then
+    WANT=$(awk -v f="$IMAGE" '$2 == f || $2 == "*"f {print $1}' /tmp/SHA256SUMS | head -1)
+    GOT=$(sha256sum "/tmp/$IMAGE" | cut -d' ' -f1)
+    if [ -z "$WANT" ]; then
+        warn "no checksum published for $IMAGE - continuing unverified"
+    elif [ "$WANT" != "$GOT" ]; then
+        rm -f "/tmp/$IMAGE"
+        err "CHECKSUM MISMATCH - download discarded (wanted $WANT, got $GOT)"
+    else
+        log "Checksum OK"
+    fi
+else
+    warn "could not fetch SHA256SUMS - continuing unverified"
+fi
 
 # Flash
 log "Flashing image (decompressing + writing)..."
