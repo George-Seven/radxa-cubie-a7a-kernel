@@ -9,6 +9,43 @@ it was measured — the date it was measured is stated.
 
 ---
 
+## Before you flash: you need active cooling
+
+These images run the board **overclocked out of the box**. A 60-second all-core
+load reaches **76 °C and is still climbing**, against an 80 °C throttle point —
+and that was measured with a heatsink and PWM fan already fitted and running.
+
+Without cooling you will hit thermal throttling quickly, and sustained load on a
+bare board risks damaging it. **Fit a heatsink and fan before you flash this.**
+
+If you want the tuning with more margin, the `standard` image is the more
+conservative of the two, and every clock can be lowered at runtime with
+`a7a-clock`.
+
+---
+
+## Disclaimer
+
+This software is provided **as is, with no warranty of any kind**, express or
+implied. You use it entirely at your own risk.
+
+Specifically:
+
+- These images **overclock your hardware** — CPU, GPU, memory and interconnect
+  all run above the manufacturer's specified frequencies and voltages.
+- Overclocking can cause instability, data loss, shortened component life, or
+  permanent damage to your board.
+- Doing this will almost certainly **void any warranty** from Radxa or your seller.
+- Everything here is validated on **one board**. Yours may not behave the same way.
+- This project is **not affiliated with Radxa or Allwinner**. It is independent work.
+
+**I accept no responsibility for any damage, data loss, or other harm resulting
+from the use of these images, packages, or instructions.** If you are not
+comfortable with that, use Radxa's official images instead — they are supported
+by the vendor, and I would rather you had a working board than a bricked one.
+
+---
+
 ## Get started
 
 Two images. Both are a **single file**, flash with Etcher, Raspberry Pi Imager

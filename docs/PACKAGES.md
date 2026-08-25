@@ -5,6 +5,13 @@ whole system ships as Debian packages.
 
 ---
 
+> **Cooling and risk.** The `maximum` package overclocks CPU, GPU, memory and
+> interconnect beyond manufacturer specification. A 60-second all-core load
+> reaches 76 °C against an 80 °C throttle point *with a fan fitted* — active
+> cooling is required, not optional. This is provided with **no warranty of any
+> kind**; it may void yours, and I accept no responsibility for damage or data
+> loss. See the [disclaimer](../README.md#disclaimer).
+
 ## The easy way — one package
 
 Two bundles, matching the two images. Pick one; they conflict with each other by
