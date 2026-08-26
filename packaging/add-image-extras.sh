@@ -48,8 +48,7 @@ rm -rf "$MNT/tmp/dsu"
 
 msg "[3/6] GPU game launchers + tools"
 for f in "$TOOLKIT/games/supertuxkart/supertuxkart-gpu" \
-         "$TOOLKIT/games/openarena/openarena-gpu" \
-         "$TOOLKIT/games/not-vice-city/vicecity-gpu"; do
+         "$TOOLKIT/games/openarena/openarena-gpu"; do
     [ -f "$f" ] && install -m 0755 "$f" "$MNT/usr/local/bin/" && echo "   + $(basename "$f")"
 done
 for f in "$KIT/tools/a7a-llm" "$KIT/tools/a7a-llm-gui.py" "$KIT/tools/a7a-clock-gui.py"; do
